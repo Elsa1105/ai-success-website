@@ -95,18 +95,53 @@
   }
 
   /* Forms — client-side validation + confirmation (no backend wired yet) */
-  document.querySelectorAll('form[data-form]').forEach(function (form) {
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (!form.reportValidity()) return;
-      var msg = form.querySelector('.formmsg');
+  /* Submit application form to backend */
+
+document.querySelectorAll('form[data-form]').forEach(function(form) {
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    if (!form.reportValidity()) return;
+
+    const button = form.querySelector('[type="submit"]');
+    const msg = form.querySelector('.formmsg');
+    const data = Object.fromEntries(new FormData(form));
+
+    if (msg) msg.classList.remove('is-on');
+    button.disabled = true;
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit application');
+      }
+
       if (msg) {
         msg.classList.add('is-on');
-        msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        msg.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
       }
+
       form.reset();
-    });
+
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert('Submission failed. Please try again.');
+    } finally {
+      button.disabled = false;
+    }
   });
+});
+
 
   /* Loan repayment estimator (contact / apply page) */
   var calc = document.getElementById('calc');
